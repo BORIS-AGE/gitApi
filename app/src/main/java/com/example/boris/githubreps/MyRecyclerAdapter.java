@@ -33,7 +33,7 @@ public class MyRecyclerAdapter extends RecyclerView.Adapter<MyRecyclerAdapter.My
 
     @Override
     public void onBindViewHolder(@NonNull MyHolder holder, int position) {
-        Picasso.with(context).load(items.get(position).getAvatar_url())
+        Picasso.with(context).load(items.get(position).getOwner().getAvatar_url())
                 .placeholder(R.drawable.load)
                 .into(holder.imageView);
 
