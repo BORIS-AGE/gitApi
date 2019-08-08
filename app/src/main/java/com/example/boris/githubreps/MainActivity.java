@@ -127,7 +127,7 @@ public class MainActivity extends AppCompatActivity {
         if (!isSetRecycler){
             manager = new LinearLayoutManager(this);
             recyclerView.setLayoutManager(manager);
-            adapter = new MyRecyclerAdapter(recyclerItems, getApplicationContext());
+            adapter = new MyRecyclerAdapter(recyclerItems, MainActivity.this);
             recyclerView.setAdapter(adapter);
             isSetRecycler = true;
         }else{
