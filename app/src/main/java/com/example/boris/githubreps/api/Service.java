@@ -11,6 +11,4 @@ import retrofit2.http.Query;
 public interface Service {
     @GET("repositories")
     Call<List<Item>> getItems(@Query("since") String since);
-
-
 }

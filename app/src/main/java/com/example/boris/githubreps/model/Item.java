@@ -13,7 +13,7 @@ public class Item {
     @Expose
     private Owner owner;
 
-    public Item(String name, String html_url, String avatar_url, Owner owner) {
+    public Item(String name, String html_url, Owner owner) {
         this.name = name;
         this.html_url = html_url;
         this.owner = owner;
@@ -43,7 +43,11 @@ public class Item {
         this.html_url = html_url;
     }
 
-    public class Owner{
+    public static Owner getOwner(String str){
+        return new Owner(str);
+    }
+
+    public static class Owner{
         @Expose
         public String avatar_url;
 

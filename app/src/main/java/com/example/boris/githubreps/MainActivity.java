@@ -6,18 +6,19 @@ import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
 import android.app.ProgressDialog;
+import android.database.Cursor;
 import android.os.Bundle;
-import android.util.ArrayMap;
+import android.os.Looper;
 import android.widget.AbsListView;
 import android.widget.Toast;
 
 import com.example.boris.githubreps.api.Client;
 import com.example.boris.githubreps.api.Service;
+import com.example.boris.githubreps.controller.SqlBrains;
 import com.example.boris.githubreps.model.Item;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
 
 import retrofit2.Call;
 import retrofit2.Callback;
@@ -49,7 +50,7 @@ public class MainActivity extends AppCompatActivity {
 
         recyclerView = findViewById(R.id.recycler);
 
-        loadJSON(currentOffset);
+        loadReps();
 
         recyclerView.addOnScrollListener(new RecyclerView.OnScrollListener() {
             @Override
@@ -70,7 +71,7 @@ public class MainActivity extends AppCompatActivity {
                 if (isScrolling && (currentItems + scrollOutItems == totalItems)) {
                     isScrolling = false;
                     currentOffset += 100;
-                    loadJSON(currentOffset);
+                    loadReps();
                 }
             }
         });
@@ -92,9 +93,12 @@ public class MainActivity extends AppCompatActivity {
                     if (response.body() != null){
                         recyclerItems.addAll(response.body());
                         if (!isSetRecycler)
-                            setRecycler();
+                            setRecycler(100);
                         else
-                            updateRecycler();
+                        //add to db
+                        for (Item item : response.body()){
+                            SqlBrains.getSqlBrains(getApplicationContext()).addContact(item.getName(),item.getHtml_url(),item.getOwner().avatar_url);
+                        }
 
                         progressDialog.dismiss();
                     }
@@ -118,15 +122,44 @@ public class MainActivity extends AppCompatActivity {
         System.out.println(str);
     }
 
-    private void setRecycler(){
-        manager = new LinearLayoutManager(this);
-        recyclerView.setLayoutManager(manager);
-        adapter = new MyRecyclerAdapter(recyclerItems, getApplicationContext());
-        recyclerView.setAdapter(adapter);
-        isSetRecycler = true;
+    private void setRecycler(int offset){
+        progressDialog.show();
+        if (!isSetRecycler){
+            manager = new LinearLayoutManager(this);
+            recyclerView.setLayoutManager(manager);
+            adapter = new MyRecyclerAdapter(recyclerItems, getApplicationContext());
+            recyclerView.setAdapter(adapter);
+            isSetRecycler = true;
+        }else{
+            adapter.notifyItemRangeChanged(currentOffset, currentOffset + offset);
+        }
+        progressDialog.dismiss();
     }
 
-    private void updateRecycler(){
-        adapter.notifyItemRangeChanged(currentOffset, currentOffset + 100);
+    private void loadReps(){
+
+        new Thread(new Runnable() {
+            @Override
+            public void run() {
+                final int size = recyclerItems.size();
+                SqlBrains.getSqlBrains(getApplicationContext()).getContacts(recyclerItems, currentOffset);
+                runOnUiThread(new Runnable() {
+                    @Override
+                    public void run() {
+                        if (size != recyclerItems.size()){
+                            currentOffset += recyclerItems.size() - size;
+                            setRecycler(30);
+                        }
+                        else{
+                            loadJSON(currentOffset);
+                            currentOffset += 100;
+                        }
+                    }
+                });
+
+            }
+        }).start();
+
+
     }
 }
